@@ -1,0 +1,170 @@
+<script>
+import { Machine, interpret, assign, send, sendParent } from 'xstate'
+
+const makeMachine = Machine({
+  id: 'first-machine',
+  initial: 'idle',
+  context: {
+    showDropdownMenu: false,
+    showAbsoluteMenu: false,
+    newReportStateEnterCount: 0,
+    checkBoxConfirm: false,
+    pfrReportName: ''
+  },
+  states: {
+    idle: {
+      on: {
+        NEW_REPORT_EVENT: {
+          target: 'newReportState'
+        },
+        SELECT_REPORT_EVENT: {
+          target: 'selectState'
+        }
+      }
+    },
+    newReportState: {
+      entry: ['flipShowAbsoluteMenu', 'increaseNewReportStateCount'],
+      on: {
+        SELECT_REPORT_EVENT: {
+          target: 'selectState',
+          actions: ['flipShowAbsoluteMenu']
+        },
+        SHOWREPORTPAGE: {
+          target: 'mainPage'
+        }
+      }
+    },
+    selectState: {
+      entry: ['flipShowDropdownMenu'],
+      on: {
+        NEW_REPORT_EVENT: {
+          target: 'newReportState',
+          actions: ['flipShowDropdownMenu']
+        }
+      }
+    },
+    mainPage: {
+      id: 'main-page',
+      initial: 'main-page-view',
+      states: {
+        'main-page-view': {
+
+        }
+      }
+    }
+  },
+  on: {
+    INPUT_CHANGE: {
+      actions: ['updatePfrReportNameContext']
+    }
+  }
+},
+{
+  actions: {
+    flipShowDropdownMenu: assign({
+    showDropdownMenu: (context, event) => context.showDropdownMenu = !context.showDropdownMenu}),
+    flipShowAbsoluteMenu: assign({
+    showAbsoluteMenu: (context, event) => context.showAbsoluteMenu = !context.showAbsoluteMenu}),
+    increaseNewReportStateCount: assign({
+      newReportStateEnterCount: (context, event) => ++context.newReportStateEnterCount
+    }),
+    updatePfrReportNameContext: assign({
+      pfrReportName: (context,  event) =>  context.pfrReportName = context.pfrReportName = event.pfrReportName
+    })
+  }
+})
+const service = interpret(makeMachine).onTransition(state => {
+  console.log(state, state.context, 'i am the state consoled from the transition');
+  makeMachine.context.showDropdownMenu  = state.context.showDropdownMenu;
+  makeMachine.context.showAbsoluteMenu  = state.context.showAbsoluteMenu;
+}).start()
+
+function sentEvents(e){
+  service.send(e)
+}
+
+let inputName = '';
+$: service.send('INPUT_CHANGE', {pfrReportName: inputName})
+
+</script>
+
+<main>
+  <div id='roof'>
+    <div class='divLikeBtn' on:click={()=>sentEvents('NEW_REPORT_EVENT')} >
+      <h3>New report</h3>
+    </div>
+    {#if makeMachine.context.showAbsoluteMenu}
+    <div id='absolute-center-div'style='position:absolute; left:50%; top:50%; transform: translate(-50%, -50%)'>
+      <div id='center-div-main'>
+        <div id='center-div-main-head'>
+          <h3 id='center-div-main-head-h'>New PFR</h3>
+        </div>
+        <div id='center-div-main-body'>
+          <p>Please name your new PRF report</p>
+          <input bind:value={inputName} />
+          <label>
+            <input type='checkbox' bind:checked={makeMachine.context.checkBoxConfirm} />
+            By checking this box, you agree to creating a new PFR report for 1
+            Credit
+          </label>
+          {#if makeMachine.context.checkBoxConfirm}
+          <button id='create-new-report-checked-btn' on:click={() => sentEvents('SHOWREPORTPAGE')}>Create new PFR report</button>
+          {/if}
+        </div>
+      </div>
+
+    </div>
+  {/if}
+    <div class='divLikeBtn' on:click={()=>sentEvents('SELECT_REPORT_EVENT')}>
+      <h3>Select report</h3>
+      {#if makeMachine.context.showDropdownMenu}
+      <ul>
+        <li>First</li>
+        <li>Secondd</li>
+        <li>Third</li>
+        <li>Forth</li>
+        <li>Fifth</li>
+        <li>Sixth</li>
+        <li>Seventh</li>
+        <li>Eight</li>
+        <li>Nine</li>
+      </ul>
+      {/if}
+    </div>
+  </div>
+</main>
+
+<style>
+#roof {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
+  margin-top: 30px;
+}
+.divLikeBtn {
+  border: 1px solid black;
+  margin: 8px;
+  padding: 7px;
+}
+li {
+  cursor: pointer;
+}
+li:hover {
+  background-color: lightblue;
+}
+#absolute-center-div {
+  width: auto;
+  height: auto;
+  padding: 25px;
+  padding-top: 0px;
+  border: 1px solid black;
+}
+#center-div-main-head-h {
+  border: 1.5 solid black;
+}
+#create-new-report-checked-btn {
+  margin-top: 20px;
+  cursor: pointer;
+}
+</style>
