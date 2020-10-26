@@ -5,6 +5,8 @@ const makeMachine = Machine({
   id: 'first-machine',
   initial: 'idle',
   context: {
+    introPage: true,
+    mainPage: false,
     showDropdownMenu: false,
     showAbsoluteMenu: false,
     newReportStateEnterCount: 0,
@@ -30,7 +32,8 @@ const makeMachine = Machine({
           actions: ['flipShowAbsoluteMenu']
         },
         SHOWREPORTPAGE: {
-          target: 'mainPage'
+          target: 'mainPage',
+          actions: ['introPage', 'mainPage']
         }
       }
     },
@@ -46,6 +49,9 @@ const makeMachine = Machine({
     mainPage: {
       id: 'main-page',
       initial: 'main-page-view',
+      context: {
+        muaha: 'huahaha'
+      },
       states: {
         'main-page-view': {
 
@@ -69,14 +75,22 @@ const makeMachine = Machine({
       newReportStateEnterCount: (context, event) => ++context.newReportStateEnterCount
     }),
     updatePfrReportNameContext: assign({
-      pfrReportName: (context,  event) =>  context.pfrReportName = context.pfrReportName = event.pfrReportName
-    })
+      pfrReportName: (context,  event) =>  context.pfrReportName = event.pfrReportName
+    }),
+    introPage: assign({
+      introPage: (context,  event) =>  context.introPage = !context.introPage
+    }),
+    mainPage: assign({
+      mainPage: (context,  event) =>  context.mainPage = !context.mainPage
+    }),
   }
 })
 const service = interpret(makeMachine).onTransition(state => {
-  console.log(state, state.context, 'i am the state consoled from the transition');
+  console.log(state, 'i am the state consoled from the transition');
   makeMachine.context.showDropdownMenu  = state.context.showDropdownMenu;
   makeMachine.context.showAbsoluteMenu  = state.context.showAbsoluteMenu;
+  makeMachine.context.introPage  = state.context.introPage;
+  makeMachine.context.mainPage  = state.context.mainPage;
 }).start()
 
 function sentEvents(e){
@@ -90,6 +104,8 @@ $: service.send('INPUT_CHANGE', {pfrReportName: inputName})
 
 <main>
   <div id='roof'>
+    {#if makeMachine.context.introPage}
+
     <div class='divLikeBtn' on:click={()=>sentEvents('NEW_REPORT_EVENT')} >
       <h3>New report</h3>
     </div>
@@ -131,7 +147,26 @@ $: service.send('INPUT_CHANGE', {pfrReportName: inputName})
       </ul>
       {/if}
     </div>
+    {/if}
   </div>
+
+  {#if makeMachine.context.mainPage}
+  <div id='main-page'>
+    <div id='main-page-top'>
+      <select>
+        <option>
+          {makeMachine.context.pfrReportName}
+        </option>
+        <option>
+            Hey
+          </option>
+      </select>
+      <!-- {console.log(makeMachine.context.pfrReportName)} -->
+      <button>Save PFR report</button>
+      <button>New PFR report</button>
+    </div>
+  </div>
+  {/if}
 </main>
 
 <style>
@@ -166,5 +201,19 @@ li:hover {
 #create-new-report-checked-btn {
   margin-top: 20px;
   cursor: pointer;
+}
+#main-page {
+  border: 1px solid black;
+}
+#main-page-top {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
+  border: 1px solid black;
+}
+#main-page-top > * {
+  margin-left: 10px;
+  margin-left: 5px;
 }
 </style>
