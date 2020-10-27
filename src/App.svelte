@@ -16,9 +16,6 @@ const makeMachine = Machine({
   states: {
     idle: {
       on: {
-        NEW_REPORT_EVENT: {
-          target: 'newReportState'
-        },
         SELECT_REPORT_EVENT: {
           target: 'selectState'
         }
@@ -62,6 +59,9 @@ const makeMachine = Machine({
   on: {
     INPUT_CHANGE: {
       actions: ['updatePfrReportNameContext']
+    },
+    NEW_REPORT_EVENT:  {
+      target: 'newReportState'
     }
   }
 },
@@ -87,10 +87,7 @@ const makeMachine = Machine({
 })
 const service = interpret(makeMachine).onTransition(state => {
   console.log(state, 'i am the state consoled from the transition');
-  makeMachine.context.showDropdownMenu  = state.context.showDropdownMenu;
-  makeMachine.context.showAbsoluteMenu  = state.context.showAbsoluteMenu;
-  makeMachine.context.introPage  = state.context.introPage;
-  makeMachine.context.mainPage  = state.context.mainPage;
+  makeMachine.context  = state.context
 }).start()
 
 function sentEvents(e){
@@ -166,6 +163,37 @@ $: service.send('INPUT_CHANGE', {pfrReportName: inputName})
       <button>New PFR report</button>
     </div>
   </div>
+
+  <div id='mid-part'>
+    <div id='mid-part-boxes'>
+
+      <div id='selected-items'>
+        <div id='selected-items-top-row'>
+          <h3>Selected: 0</h3>
+          <input />
+          <button>Go</button>
+        </div>
+        <div id='selected-items-body-row'>
+
+        </div>
+      </div>
+
+      <div id='unselected-items'>
+          <div id='unselected-items-top-row'>
+            <h3>Selected: 0</h3>
+            <input />
+            <button>Go</button>
+          </div>
+          <div id='unselected-items-body-row'>
+
+          </div>
+        </div>
+
+
+    </div>
+  </div>
+
+
   {/if}
 </main>
 
@@ -215,5 +243,48 @@ li:hover {
 #main-page-top > * {
   margin-left: 10px;
   margin-left: 5px;
+}
+
+#mid-part-boxes {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center
+}
+#selected-items {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid black;
+  height: 460px;
+}
+#selected-items-top-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  border-bottom: 2px solid black;
+}
+#selected-items-body-row{
+  height: 80%;
+}
+#unselected-items {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid black;
+  height: 460px;
+}
+#unselected-items-top-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  border-bottom: 2px solid black;
+}
+#unselected-items-body-row{
+  height: 80%;
 }
 </style>
