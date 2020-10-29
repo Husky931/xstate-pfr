@@ -279,9 +279,8 @@
     <main>
       <div id='roof'>
         {#if makeMachine.context.introPage}
-        <div class='divLikeBtn' on:click={()=>sentEvents('NEW_REPORT_EVENT')} >
-          <h3>New report</h3>
-        </div>
+        <div id='intro-page-buttons'>
+        <button on:click={()=>sentEvents('SELECT_REPORT_EVENT')}>Select report</button>
         {#if makeMachine.context.showAbsoluteMenu}
         <div id='absolute-center-div'style='position:absolute; left:50%; top:50%; transform: translate(-50%, -50%)'>
           <div id='center-div-main'>
@@ -303,8 +302,8 @@
           </div>
         </div>
       {/if}
-        <div class='divLikeBtn' on:click={()=>sentEvents('SELECT_REPORT_EVENT')}>
-          <h3>Select report</h3>
+          <button on:click={()=>sentEvents('NEW_REPORT_EVENT')}>New PFR report</button>
+          </div>
           {#if makeMachine.context.showDropdownMenu}
           <ul>
             <li>First</li>
@@ -318,7 +317,7 @@
             <li>Nine</li>
           </ul>
           {/if}
-        </div>
+
         {/if}
       </div>
       {#if makeMachine.context.mainPage}
@@ -464,5 +463,12 @@
     }
     #unselected-items-body-row{
       height: 80%;
+    }
+    #intro-page-buttons {
+      border: 1px solid black;
+      width: 90%;
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-end;
     }
     </style>
