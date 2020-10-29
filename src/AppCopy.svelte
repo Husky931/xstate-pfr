@@ -195,7 +195,7 @@
           }
         },
         mainPage: {
-
+          ...mainPageMachine
         }
       },
       on: {
@@ -230,6 +230,7 @@
         turnOnIntro: assign({
           introPage: (context,  event) =>  context.introPage = true
         }),
+
       }
     })
 
@@ -268,168 +269,191 @@
     </script>
 
     <main>
-      <div id='whole-page'>
-        <div id='head-section'>
-          <div id='flex-row'>
-            <h3>PFR REPORTS</h3>
-            <div id='head-sections-buttons'>
-              <select on:click={()=>sentEvents('SELECT_REPORT_EVENT')}>
-                <option value='undefined'>Select Reports</option>
-              </select>
-              <button class='btn' on:click={()=>sentEvents('NEW_REPORT_EVENT')}>New Report</button>
+      <div id='roof'>
+        <div id='main-page-top'>
+            <select>
+              <option>
+                {makeMachine.context.pfrReportName}
+              </option>
+              <option>
+                  Hey
+                </option>
+            </select>
+            <button on:click={()=>sentEvents('SELECT_REPORT_EVENT')}>Select report</button>
+          <button on:click={()=>sentEvents('NEW_REPORT_EVENT')}>New PFR report</button>
+          </div>
+        {#if makeMachine.context.introPage}
+        {#if makeMachine.context.showAbsoluteMenu}
+        <div id='absolute-center-div'style='position:absolute; left:50%; top:50%; transform: translate(-50%, -50%)'>
+          <div id='center-div-main'>
+            <div id='center-div-main-head'>
+              <h3 id='center-div-main-head-h'>New PFR</h3>
+            </div>
+            <div id='center-div-main-body'>
+              <p>Please name your new PRF report</p>
+              <input bind:value={inputName} />
+              <label>
+                <input type='checkbox' bind:checked={makeMachine.context.checkBoxConfirm} />
+                By checking this box, you agree to creating a new PFR report for 1
+                Credit
+              </label>
+              {#if makeMachine.context.checkBoxConfirm}
+              <button id='create-new-report-checked-btn' on:click={() => sentEvents('SHOWREPORTPAGE')}>Create new PFR report</button>
+              {/if}
             </div>
           </div>
         </div>
-
-        {#if makeMachine.context.showAbsoluteMenu}
-        <div class='modal-wrap'>
-          <div class='modal-bg'>
-            <div class='modal-content' style='position:absolute; left:50%; top:50%; transform: translate(-50%, -50%)'>
-              <div class='modal-header'>
-                <h2 id='center-div-main-head-h'>New PFR</h2>
-              </div>
-                <div class='modal-body'>
-                  <p>Please name your new PRF report</p>
-                  <input bind:value={inputName} />
-                  <label>
-                    <input type='checkbox' bind:checked={makeMachine.context.checkBoxConfirm} />
-                    By checking this box, you agree to creating a new PFR report for 1
-                    Credit
-                  </label>
-                  {#if makeMachine.context.checkBoxConfirm}
-                  <button class='btn' id='btn-1' on:click={() => sentEvents('SHOWREPORTPAGE')}>Create new PFR report</button>
-                  {/if}
-                </div>
-                </div>
-                </div>
-              </div>
-            {/if}
+      {/if}
+          {#if makeMachine.context.showDropdownMenu}
+          <ul>
+            <li>First</li>
+            <li>Secondd</li>
+            <li>Third</li>
+            <li>Forth</li>
+            <li>Fifth</li>
+            <li>Sixth</li>
+            <li>Seventh</li>
+            <li>Eight</li>
+            <li>Nine</li>
+          </ul>
+          {/if}
+        {/if}
+      </div>
+      {#if makeMachine.context.mainPage}
+      <div id='mid-part'>
+        <div id='mid-part-boxes'>
+          <div id='selected-items'>
+            <div id='selected-items-top-row'>
+              <h3>Selected: {mainPageMachine.context.selectedKWLength}</h3>
+              <input bind:value={searchKW} />
+              <button on:click={()=>sentEvents2('inputFetchEvent')}>Go</button>
+              <button on:click={() => service2.send('TRANSFER_UNSELECTED_ALL')}>ALL</button>
             </div>
-          </main>
+            <div id='selected-items-body-row'>
+              <ul >
+              {#each mainPageMachine.context.selectedKW as selectedKW, i}
+                <li on:click={() => transferSelectedtoUnselected(i)}>{selectedKW}</li>
+              {/each}
+              </ul>
+            </div>
+          </div>
+          <div id='unselected-items'>
+            <div id='unselected-items-top-row'>
+              <h3>Unselected: {mainPageMachine.context.unselectedKWLength}</h3>
+              <button on:click={() => service2.send('TRANSFER_SELECTED_ALL')}>ALL</button>
+            </div>
+            <div id='unselected-items-body-row'>
+              <ul>
+                {#each mainPageMachine.context.unselectedKW as unselectedKW, i}
+                  <li on:click={() => transferUnselectedtoSelected(i)}>{unselectedKW}</li>
+                {/each}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/if}
+    </main>
 
     <style>
-      #whole-page{
-        width: 100vw;
-        height: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-      #head-section{
-        width: 70%;
-        height: 40px;
-      }
-      #flex-row {
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-      }
-      #head-sections-buttons {
-        margin-right: 40px;
-      }
-      h3 {
-        margin-left: 50px;
-      }
-      #absolute-center-div {
-        border: 1px solid black;
-      }
-    .btn {
-      border-radius: 3px;
-      background-color: #ff2c54;
-      border: 0;
-      color: white;
-      font-size: 0.8rem;
+    #roof {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      justify-content: center;
+      margin-top: 30px;
+    }
+    .divLikeBtn {
+      border: 1px solid black;
+      margin: 8px;
+      padding: 7px;
+    }
+    li {
       cursor: pointer;
-      outline: none;
-      padding: 8px;
-      min-width: 80px;
-      box-shadow: 0 0;
-      margin-right: 5px;
-      box-shadow: 0 0.125rem 0.25rem 0 rgba(58, 59, 69, 0.2) !important;
-      transition: all 0.3s ease;
-  }
-  select {
-    -webkit-writing-mode: horizontal-tb !important;
-    text-rendering: auto;
-    color: -internal-light-dark(black, white);
-    letter-spacing: normal;
-    word-spacing: normal;
-    text-transform: none;
-    text-indent: 0px;
-    text-shadow: none;
-    display: inline-block;
-    text-align: start;
-    appearance: menulist;
-    box-sizing: border-box;
-    align-items: center;
-    white-space: pre;
-    -webkit-rtl-ordering: logical;
-    background-color: -internal-light-dark(rgb(255, 255, 255), rgb(59, 59, 59));
-    cursor: default;
-    margin: 0em;
-    font: 400 13.3333px Arial;
-    border-width: 1px;
-    border-style: solid;
-    border-color: -internal-light-dark(rgb(118, 118, 118), rgb(133, 133, 133));
-    border-image: initial;
-    border-radius: 0.25rem;
-    box-sizing: border-box;
-    padding: 7px 5px;
-    width: 150px;
-    margin-right: 5px;
-    box-shadow: rgba(58, 59, 69, 0.2) 0px 0.125rem 0.25rem 0px !important;
-  }
-  .modal-wrap {
-    position: fixed;
-    width: 100%;
-    top: 0;
-    left: 0;
-    z-index: 999;
-    bottom: 0;
-    right: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
+    }
+    li:hover {
+      background-color: lightblue;
+    }
+    #absolute-center-div {
+      width: auto;
+      height: auto;
+      padding: 25px;
+      padding-top: 0px;
+      border: 1px solid black;
+    }
+    #center-div-main-head-h {
+      border: 1.5 solid black;
+    }
+    #create-new-report-checked-btn {
+      margin-top: 20px;
+      cursor: pointer;
+    }
+    #main-page {
+      border: 1px solid black;
+    }
+    #main-page-top {
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-end;
+      align-items: center;
+      border: 1px solid black;
+    }
+    #main-page-top > * {
+      margin-left: 10px;
+      margin-left: 5px;
+    }
 
-.modal-bg {
-    background: #313a46e8;
-    position: absolute;
-    width: 100%;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    right: 0;
-}
-  .modal-content {
-    max-width: 500px;
-    width: 100%;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    background-color: #fff;
-    background-clip: border-box;
-    border: 1px solid #e3e6f0;
-    border-radius: 0.35rem;
-    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important;
-  }
-  .modal-header {
-    padding: 16px 20px;
-    margin-bottom: 0;
-    background-color: #f8f9fc;
-    border-bottom: 1px solid #e3e6f0;
-}
-.modal-body {
-    padding: 16px 20px;
-}
-h2 {
-  margin-top: 0;
-  margin-bottom: 0;
-  color: #ff2c54;
-}
-#btn-1 {
-  margin-top: 11px;
-}
+    #mid-part-boxes {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      flex-basis: 100%;
+    }
+    #selected-items {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      border: 1px solid black;
+      height: 460px;
+      width: 350px;
+    }
+    #selected-items-top-row {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      border-bottom: 2px solid black;
+    }
+    #selected-items-body-row{
+      height: auto;
+    }
+    #unselected-items {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      border: 1px solid black;
+      height: 460px;
+      width: 350px;
+    }
+    #unselected-items-top-row {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      border-bottom: 2px solid black;
+      width: 90%;
+    }
+    #unselected-items-body-row{
+      height: 80%;
+    }
+    #intro-page-buttons {
+      border: 1px solid black;
+      width: 90%;
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-end;
+    }
     </style>
