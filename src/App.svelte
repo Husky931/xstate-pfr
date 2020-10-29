@@ -6,8 +6,8 @@
       id: 'fetchKW-machine',
       initial: 'receive_signal',
       context: {
-        fetchedKW: [],
-        fetchedKWLength: 0
+        selectedKW: [],
+        selectedKWLength: 0
       },
       states: {
         receive_signal: {
@@ -16,8 +16,8 @@
             onDone: {
               target: 'success',
               actions: assign({
-                fetchedKW: (context, event) => event.data,
-                fetchedKWLength: (context, event) => event.data.length
+                selectedKW: (context, event) => event.data,
+                selectedKWLength: (context, event) => event.data.length
               })
             },
             onError: {
@@ -28,8 +28,8 @@
         success: {
           type: 'final',
           data: {
-            fetchedKW: (context, event) => context.fetchedKW,
-            fetchedKWLength: (context, event) => context.fetchedKWLength,
+            selectedKW: (context, event) => context.selectedKW,
+            selectedKWLength: (context, event) => context.selectedKWLength,
           }
         },
         error: {
@@ -45,9 +45,10 @@
       initial: 'main_page_overview',
       context: {
         searchKW: '',
-        fetchedKW: [],
-        unselectedKW: ['1','2','3','4'],
-        fetchedKWLength: 0
+        selectedKW: [],
+        selectedKWLength: 0,
+        unselectedKW: [],
+        unselectedKWLength: 0
       },
       states: {
         main_page_overview: {
@@ -63,7 +64,7 @@
             src: fetchKWMachine,
             onDone: {
               target: 'selected_Items_State',
-              actions: ['updateFetchKw', 'updateFetchKwLength']
+              actions: ['updateFetchKw', 'updateFetchKwLength', 'removeSearchKw']
             },
             onError: {
               target: 'failureState'
@@ -88,8 +89,17 @@
         INPUT_CHANGE: {
           actions: ['updateSearchKW']
         },
-        TRANSFER_KW: {
-          actions: ['transferKW']
+        TRANSFER_SELECTED: {
+          actions: ['transferSelected']
+        },
+        TRANSFER_UNSELECTED: {
+          actions: ['transferUnselected']
+        },
+        TRANSFER_SELECTED_ALL: {
+          actions: ['transferSelectedAll']
+        },
+        TRANSFER_UNSELECTED_ALL: {
+          actions: ['transferUnselectedAll']
         }
       }
     },
@@ -99,17 +109,41 @@
           searchKW: (context, event) => context.searchKW = event.searchKW
         }),
         updateFetchKw: assign({
-          fetchedKW: (context, event) =>  event.data.fetchedKW
+          selectedKW: (context, event) =>  event.data.selectedKW
         }),
         updateFetchKwLength: assign({
-          fetchedKWLength: (context, event) =>  event.data.fetchedKWLength
+          selectedKWLength: (context, event) =>  event.data.selectedKWLength
         }),
-        transferKW: assign({
-          unselectedKW: (context, event) => context.unselectedKW = [...context.unselectedKW].concat(context.fetchedKW[event.elementIndex]),
-          fetchedKW: (context, event) => {
-            context.fetchedKW.splice(event.elementIndex, 1)
-            return [...context.fetchedKW]},
-          fetchedKWLength: (context, event) =>  context.fetchedKWLength = context.fetchedKW.length
+        removeSearchKw: assign({
+          searchKW: (context, event) =>  context.searchKW = '',
+        }),
+        transferSelected: assign({
+          unselectedKW: (context, event) => context.unselectedKW = [...context.unselectedKW].concat(context.selectedKW[event.elementIndex]),
+          selectedKW: (context, event) => {
+            context.selectedKW.splice(event.elementIndex, 1)
+            return [...context.selectedKW]},
+          selectedKWLength: (context, event) =>  context.selectedKWLength = context.selectedKW.length,
+          unselectedKWLength: (context, event) =>  context.unselectedKWLength = context.unselectedKW.length,
+        }),
+        transferUnselected: assign({
+          selectedKW: (context, event) => context.selectedKW = [...context.selectedKW].concat(context.unselectedKW[event.elementIndex]),
+          unselectedKW: (context, event) => {
+            context.unselectedKW.splice(event.elementIndex, 1)
+            return [...context.unselectedKW]},
+          unselectedKWLength: (context, event) =>  context.unselectedKWLength = context.unselectedKW.length,
+          selectedKWLength: (context, event) =>  context.selectedKWLength = context.selectedKW.length,
+        }),
+        transferSelectedAll: assign({
+          unselectedKW: (context, event) => [...context.unselectedKW, ...context.selectedKW],
+          selectedKW: (context, event) => [],
+          selectedKWLength: (context, event) =>  context.selectedKWLength = context.selectedKW.length,
+          unselectedKWLength: (context, event) =>  context.unselectedKWLength = context.unselectedKW.length,
+        }),
+        transferUnselectedAll: assign({
+          selectedKW: (context, event) => [...context.selectedKW, ...context.unselectedKW],
+          unselectedKW: (context, event) => [],
+          unselectedKWLength: (context, event) =>  context.unselectedKWLength = context.unselectedKW.length,
+          selectedKWLength: (context, event) =>  context.selectedKWLength = context.selectedKW.length,
         }),
         },
       guards: {
@@ -230,20 +264,21 @@
     }
     function sentEvents2(e){
       service2.send(e);
-      console.log(e)
+      searchKW = '';
     }
 
-    function transferKW(elementIndex){
-      service2.send('TRANSFER_KW', {elementIndex: elementIndex})
+    function transferSelectedtoUnselected(elementIndex){
+      service2.send('TRANSFER_SELECTED', {elementIndex: elementIndex})
     }
-
+    function transferUnselectedtoSelected(elementIndex){
+      service2.send('TRANSFER_UNSELECTED', {elementIndex: elementIndex})
+    }
 
     </script>
 
     <main>
       <div id='roof'>
         {#if makeMachine.context.introPage}
-
         <div class='divLikeBtn' on:click={()=>sentEvents('NEW_REPORT_EVENT')} >
           <h3>New report</h3>
         </div>
@@ -266,7 +301,6 @@
               {/if}
             </div>
           </div>
-
         </div>
       {/if}
         <div class='divLikeBtn' on:click={()=>sentEvents('SELECT_REPORT_EVENT')}>
@@ -287,7 +321,6 @@
         </div>
         {/if}
       </div>
-
       {#if makeMachine.context.mainPage}
       <div id='main-page'>
         <div id='main-page-top'>
@@ -303,44 +336,38 @@
           <button>New PFR report</button>
         </div>
       </div>
-
       <div id='mid-part'>
         <div id='mid-part-boxes'>
-
           <div id='selected-items'>
             <div id='selected-items-top-row'>
-              <h3>Selected: {mainPageMachine.context.fetchedKWLength}</h3>
+              <h3>Selected: {mainPageMachine.context.selectedKWLength}</h3>
               <input bind:value={searchKW} />
               <button on:click={()=>sentEvents2('inputFetchEvent')}>Go</button>
+              <button on:click={() => service2.send('TRANSFER_UNSELECTED_ALL')}>ALL</button>
             </div>
             <div id='selected-items-body-row'>
               <ul >
-              {#each mainPageMachine.context.fetchedKW as fetchedKW, i}
-                <li on:click={() => transferKW(i)}>{fetchedKW}</li>
+              {#each mainPageMachine.context.selectedKW as selectedKW, i}
+                <li on:click={() => transferSelectedtoUnselected(i)}>{selectedKW}</li>
               {/each}
               </ul>
             </div>
           </div>
-
           <div id='unselected-items'>
             <div id='unselected-items-top-row'>
-              <h3>Selected: 0</h3>
-              <button>Go</button>
+              <h3>Unselected: {mainPageMachine.context.unselectedKWLength}</h3>
+              <button on:click={() => service2.send('TRANSFER_SELECTED_ALL')}>ALL</button>
             </div>
             <div id='unselected-items-body-row'>
               <ul>
                 {#each mainPageMachine.context.unselectedKW as unselectedKW, i}
-                  <li>{unselectedKW}</li>
+                  <li on:click={() => transferUnselectedtoSelected(i)}>{unselectedKW}</li>
                 {/each}
               </ul>
             </div>
           </div>
-
-
         </div>
       </div>
-
-
       {/if}
     </main>
 
