@@ -105,7 +105,6 @@
         updateSearchKW: assign({
           searchKW: (context, event) => context.searchKW = event.searchKW
         }),
-        // SPOJ GI MOMENTALNITE SELEKTED KW SO NOVATA PRATKA SO STIGA
         updateFetchKw: assign({
           selectedKW: (context, event) => [...context.selectedKW, ...event.data.selectedKW]
         }),
@@ -196,17 +195,7 @@
           }
         },
         mainPage: {
-          id: 'main-page',
-          initial: 'main-page-view',
-          states: {
-            'main-page-view': {
-              invoke: {
-                src: mainPageMachine,
-                id: 'main-page',
-                // onDone:
-              }
-            }
-          }
+
         }
       },
       on: {
@@ -214,7 +203,8 @@
           actions: ['updatePfrReportNameContext']
         },
         NEW_REPORT_EVENT:  {
-          target: 'newReportState'
+          target: 'newReportState',
+          actions: ['turnOnIntro'],
         },
 
       }
@@ -237,12 +227,15 @@
         mainPage: assign({
           mainPage: (context,  event) =>  context.mainPage = !context.mainPage
         }),
+        turnOnIntro: assign({
+          introPage: (context,  event) =>  context.introPage = true
+        }),
       }
     })
 
 
     const service = interpret(makeMachine).onTransition(state =>{
-      console.log(state.value);
+      console.log(state.context, 'makeMachine');
       makeMachine.context = state.context
     }).start()
     let inputName = '';
@@ -251,7 +244,7 @@
 
     let searchKW = ''
     const service2 = interpret(mainPageMachine).onTransition(state => {
-      // console.log(state.value);
+      console.log(state.value, 'mainPageMachine');
       mainPageMachine.context = state.context
     }).start()
     $: service2.send('INPUT_CHANGE', {searchKW: searchKW})
@@ -330,7 +323,7 @@
               </option>
           </select>
           <button>Save PFR report</button>
-          <button>New PFR report</button>
+          <button on:click={()=>sentEvents('NEW_REPORT_EVENT')}>New PFR report</button>
         </div>
       </div>
       <div id='mid-part'>
