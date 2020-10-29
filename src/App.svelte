@@ -51,20 +51,14 @@
         unselectedKWLength: 0
       },
       states: {
-        main_page_overview: {
-          on: {
-            inputFetchEvent: {
-              target: 'inputFetchState',
-              cond: 'searchValidate'
-            }
-          }
-        },
+        main_page_overview: {},
         inputFetchState: {
+          entry: () => console.log('here'),
           invoke: {
             src: fetchKWMachine,
             onDone: {
               target: 'selected_Items_State',
-              actions: ['updateFetchKw', 'updateFetchKwLength', 'removeSearchKw']
+             actions: ['updateFetchKw', 'updateFetchKwLength', 'removeSearchKw']
             },
             onError: {
               target: 'failureState'
@@ -75,7 +69,6 @@
           on: {
             INVOKE_AGAIN: '',
             RELATED_ITEM: '',
-            REMOVE: ''
           }
         },
         unselected_Items_State: {},
@@ -100,6 +93,10 @@
         },
         TRANSFER_UNSELECTED_ALL: {
           actions: ['transferUnselectedAll']
+        },
+        inputFetchEvent: {
+          target: 'inputFetchState',
+          cond: 'searchValidate'
         }
       }
     },
@@ -108,8 +105,9 @@
         updateSearchKW: assign({
           searchKW: (context, event) => context.searchKW = event.searchKW
         }),
+        // SPOJ GI MOMENTALNITE SELEKTED KW SO NOVATA PRATKA SO STIGA
         updateFetchKw: assign({
-          selectedKW: (context, event) =>  event.data.selectedKW
+          selectedKW: (context, event) => [...context.selectedKW, ...event.data.selectedKW]
         }),
         updateFetchKwLength: assign({
           selectedKWLength: (context, event) =>  event.data.selectedKWLength
@@ -244,7 +242,7 @@
 
 
     const service = interpret(makeMachine).onTransition(state =>{
-      console.log(state, 'i am makeMachine');
+      console.log(state.value);
       makeMachine.context = state.context
     }).start()
     let inputName = '';
@@ -253,7 +251,7 @@
 
     let searchKW = ''
     const service2 = interpret(mainPageMachine).onTransition(state => {
-      console.log(state, 'i am mainPageMachine');
+      // console.log(state.value);
       mainPageMachine.context = state.context
     }).start()
     $: service2.send('INPUT_CHANGE', {searchKW: searchKW})
@@ -442,7 +440,7 @@
       border-bottom: 2px solid black;
     }
     #selected-items-body-row{
-      height: 80%;
+      height: auto;
     }
     #unselected-items {
       display: flex;

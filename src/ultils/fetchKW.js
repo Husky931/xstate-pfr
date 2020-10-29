@@ -5,6 +5,9 @@ function returnRandom(){
   return value;
 }
 
+function randomArray(){
+
+}
 var firstArray = [
   'januar1',
   'januar2',
