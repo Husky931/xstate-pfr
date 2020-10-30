@@ -51,7 +51,9 @@
         unselectedKWLength: 0
       },
       states: {
-        main_page_overview: {},
+        main_page_overview: {
+
+        },
         inputFetchState: {
           entry: () => console.log('here'),
           invoke: {
@@ -83,16 +85,16 @@
           actions: ['updateSearchKW']
         },
         TRANSFER_SELECTED: {
-          actions: ['transferSelected']
+          actions: ['transferSelected','adjustKWlength']
         },
         TRANSFER_UNSELECTED: {
-          actions: ['transferUnselected']
+          actions: ['transferUnselected', 'adjustKWlength']
         },
         TRANSFER_SELECTED_ALL: {
-          actions: ['transferSelectedAll']
+          actions: ['transferSelectedAll', 'adjustKWlength']
         },
         TRANSFER_UNSELECTED_ALL: {
-          actions: ['transferUnselectedAll']
+          actions: ['transferUnselectedAll', 'adjustKWlength']
         },
         inputFetchEvent: {
           target: 'inputFetchState',
@@ -119,22 +121,17 @@
           selectedKW: (context, event) => {
             context.selectedKW.splice(event.elementIndex, 1)
             return [...context.selectedKW]},
-          selectedKWLength: (context, event) =>  context.selectedKWLength = context.selectedKW.length,
-          unselectedKWLength: (context, event) =>  context.unselectedKWLength = context.unselectedKW.length,
         }),
         transferUnselected: assign({
           selectedKW: (context, event) => context.selectedKW = [...context.selectedKW].concat(context.unselectedKW[event.elementIndex]),
           unselectedKW: (context, event) => {
             context.unselectedKW.splice(event.elementIndex, 1)
             return [...context.unselectedKW]},
-          unselectedKWLength: (context, event) =>  context.unselectedKWLength = context.unselectedKW.length,
-          selectedKWLength: (context, event) =>  context.selectedKWLength = context.selectedKW.length,
         }),
         transferSelectedAll: assign({
           unselectedKW: (context, event) => [...context.unselectedKW, ...context.selectedKW],
           selectedKW: (context, event) => [],
-          selectedKWLength: (context, event) =>  context.selectedKWLength = context.selectedKW.length,
-          unselectedKWLength: (context, event) =>  context.unselectedKWLength = context.unselectedKW.length,
+
         }),
         transferUnselectedAll: assign({
           selectedKW: (context, event) => [...context.selectedKW, ...context.unselectedKW],
@@ -142,10 +139,14 @@
           unselectedKWLength: (context, event) =>  context.unselectedKWLength = context.unselectedKW.length,
           selectedKWLength: (context, event) =>  context.selectedKWLength = context.selectedKW.length,
         }),
+        adjustKWlength: assign({
+          selectedKWLength: (context, event) =>  context.selectedKWLength = context.selectedKW.length,
+          unselectedKWLength: (context, event) =>  context.unselectedKWLength = context.unselectedKW.length
+        })
         },
       guards: {
         searchValidate: (context, event) => {
-          return context.searchKW.length > 3
+          return context.searchKW.length > 0
         }
       }
     }
@@ -162,7 +163,7 @@
         newReportStateEnterCount: 0,
         checkBoxConfirm: false,
         pfrReportName: '',
-        selectedReports: ['one', 'two', 'three']
+        selectedReports: []
       },
       states: {
         idle: {
@@ -175,15 +176,12 @@
         newReportState: {
           entry: ['flipShowAbsoluteMenu', 'increaseNewReportStateCount'],
           on: {
-            SELECT_REPORT_EVENT: {
-              target: 'selectState',
-              actions: ['flipShowAbsoluteMenu']
-            },
             SHOWREPORTPAGE: {
               target: 'mainPage',
-              actions: ['introPage', 'mainPage']
+              actions: ['introPage', 'mainPage', 'flipShowDropdownMenu', 'addNameToReports']
             }
-          }
+          },
+          exit: ['flipShowAbsoluteMenu']
         },
         selectState: {
           entry: ['flipShowDropdownMenu'],
@@ -195,7 +193,7 @@
           }
         },
         mainPage: {
-
+          ...mainPageMachine
         }
       },
       on: {
@@ -203,10 +201,8 @@
           actions: ['updatePfrReportNameContext']
         },
         NEW_REPORT_EVENT:  {
-          target: 'newReportState',
-          actions: ['turnOnIntro'],
+          target: 'newReportState'
         },
-
       }
     },
     {
@@ -227,15 +223,15 @@
         mainPage: assign({
           mainPage: (context,  event) =>  context.mainPage = !context.mainPage
         }),
-        turnOnIntro: assign({
-          introPage: (context,  event) =>  context.introPage = true
+        addNameToReports: assign({
+          selectedReports: (context,  event) =>  context.selectedReports.concat(context.pfrReportName)
         }),
       }
     })
 
 
     const service = interpret(makeMachine).onTransition(state =>{
-      console.log(state.context, 'makeMachine');
+      console.log(state, 'makeMachine');
       makeMachine.context = state.context
     }).start()
     let inputName = '';
@@ -244,16 +240,16 @@
 
     let searchKW = ''
     const service2 = interpret(mainPageMachine).onTransition(state => {
-      console.log(state.value, 'mainPageMachine');
+      console.log(state, 'mainPageMachine');
       mainPageMachine.context = state.context
     }).start()
     $: service2.send('INPUT_CHANGE', {searchKW: searchKW})
 
 
-    function sentEvents(e){
+    function firstMachineEvents(e){
       service.send(e)
     }
-    function sentEvents2(e){
+    function mainPageEvents(e){
       service2.send(e);
       searchKW = '';
     }
@@ -264,51 +260,94 @@
     function transferUnselectedtoSelected(elementIndex){
       service2.send('TRANSFER_UNSELECTED', {elementIndex: elementIndex})
     }
+    function transferAllSelectedToUnselected(){
+      service2.send('TRANSFER_SELECTED_ALL')
+    }
+    function transferAllUnselectedToSelected(){
+      service2.send('TRANSFER_UNSELECTED_ALL')
+    }
 
     </script>
 
     <main>
-
       <div class='content-page'>
         <div class='content'>
         <div id='head-section'>
             <div id='flex-row'>
               <h3>PFR REPORTS</h3>
               <div id='head-sections-buttons'>
-                <select on:click={()=>sentEvents('SELECT_REPORT_EVENT')}>
-                  <option value='undefined'>Select Reports</option>
+                <select on:click={()=>firstMachineEvents('SELECT_REPORT_EVENT')}>
+                 {#each makeMachine.context.selectedReports as selectedReport, i}
+                 <option>{selectedReport}</option>
+                 {/each}
                 </select>
-                <button class='btn' on:click={()=>sentEvents('NEW_REPORT_EVENT')}>New Report</button>
+                {#if makeMachine.context.mainPage}
+                <button class='btn'>Save Report</button>
+                {/if}
+                <button class='btn' on:click={()=> firstMachineEvents('NEW_REPORT_EVENT')}>New Report</button>
               </div>
             </div>
           </div>
 
           {#if makeMachine.context.showAbsoluteMenu}
+          <div class='modal-wrap'>
+              <div class='modal-bg'></div>
+              <div class='modal-content'>
+                <div class='modal-header'>
+                  <h3 class='heading'>New PFR</h3>
+                </div>
+                <div class='modal-body'>
+                  <p>Please name your New Pfr report</p>
+                  <input type='text' bind:value={inputName} />
+                  <label>
+                    <input type='checkbox' bind:checked={makeMachine.context.checkBoxConfirm} />
+                    By checking this box, you agree to creating a new PFR report for 1
+          Credit
+                  </label>
+                  {#if makeMachine.context.checkBoxConfirm}
+                <button class='btn' id='btn-agree' on:click={() => firstMachineEvents('SHOWREPORTPAGE')}>Create new PFR report</button>
+                {/if}
+                </div>
+              </div>
+            </div>
+          {/if}
+
+          {#if makeMachine.context.mainPage}
             <div class='rw'>
               <div class='cl-50 selected'>
                 <div class='card'>
-                  <div class='card-header'></div>
+                  <div class='card-header'>
+                      <h3 class='card-title'>Selected Items: {mainPageMachine.context.selectedKWLength}</h3>
+                  </div>
                   <div class='card-body'>
-                    <h3 class='card-title'>Selected Items</h3>
                     <div class='card-options'>
-                      <form>
                         <input type='text' bind:value={searchKW} />
-                        <button class='btn'>Search</button>
-                      </form>
-                      <button class='btn'>All</button>
+                        <button class='btn' id='btn-2' on:click={()=>mainPageEvents('inputFetchEvent')}>Search</button>
+                      <button type='button' class='btn' on:click={() => transferAllSelectedToUnselected()}>All</button>
                     </div>
+                    <ul class='selected-ul'>
+                      {#each mainPageMachine.context.selectedKW as selectedKW, i}
+                      <li on:click={() => transferSelectedtoUnselected(i)}>{selectedKW}</li>
+                      {/each}
+                    </ul>
                   </div>
                 </div>
               </div>
 
               <div class='cl-50 unselected'>
                 <div class='card'>
-                  <div class='card-header'></div>
+                  <div class='card-header'>
+                      <h3 class='card-title'>Unselected Items: {mainPageMachine.context.unselectedKWLength}</h3>
+                  </div>
                   <div class='card-body'>
-                    <h3 class='card-title'>Unselected Items</h3>
                     <div class='card-options'>
-                      <button class='btn'>All</button>
+                      <button class='btn' on:click={() => transferAllUnselectedToSelected()}>All</button>
                     </div>
+                    <ul class='unselected-ul'>
+                      {#each mainPageMachine.context.unselectedKW as unselectedKW, i}
+                      <li on:click={() => transferUnselectedtoSelected(i)}>{unselectedKW}</li>
+                      {/each}
+                    </ul>
                   </div>
                 </div>
               </div>
@@ -336,7 +375,7 @@
       align-items: center;
     }
     #head-section{
-      width: 70%;
+      width: 100%;
       height: 40px;
     }
     #flex-row {
@@ -344,12 +383,18 @@
       flex-direction: row;
       justify-content: space-between;
       align-items: center;
+      width: 100%;
     }
     #head-sections-buttons {
       margin-right: 40px;
+      width: 100%;
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-end;
     }
     h3 {
-      margin-left: 50px;
+      margin-left: 20px;
+      width: 100%;
     }
     #absolute-center-div {
       border: 1px solid black;
@@ -368,6 +413,15 @@
     margin-right: 5px;
     box-shadow: 0 0.125rem 0.25rem 0 rgba(58, 59, 69, 0.2) !important;
     transition: all 0.3s ease;
+    margin: 0;
+    margin-left: 2px;
+    margin-right: 2px;
+}
+#btn-2 {
+  height: 31px;
+  margin: 0;
+  margin-left: 2px;
+  margin-right: 2px;
 }
 select{
   -webkit-writing-mode: horizontal-tb !important;
@@ -495,7 +549,7 @@ h2 {
     min-height: 1px;
     padding: 20px;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
 }
 h3.card-title {
     font-size: 16px;
@@ -511,6 +565,7 @@ h3.card-title {
 .card-options {
     display: flex;
     align-items: center;
+    flex-direction: row;
 }
 .icnbtn {
     padding: 5.5px !important;
@@ -531,5 +586,59 @@ h3.card-title {
 .icon {
     height: 21px;
     width: 21px;
+}
+
+label {
+    display: flex;
+    color: #949494;
+    font-style: italic;
+    font-size: 13px;
+}
+input[type="checkbox" i] {
+    background-color: initial;
+    cursor: default;
+    appearance: checkbox;
+    box-sizing: border-box;
+    margin: 3px 3px 3px 4px;
+    padding: initial;
+    border: initial;
+}
+input[type='text'] {
+    width: 100%;
+    outline: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    border: 0.5px solid silver;
+    outline: 0;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    border-radius: 0.25rem;
+    display: flex;
+    box-sizing: border-box;
+    padding: 8px 5px;
+    margin: 10px 0px;
+}
+h3 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+h3.heading {
+    font-size: 16px;
+    font-weight: 700;
+    color: #ff2c54;
+    margin-left: 0;
+}
+#btn-agree {
+  margin-top: 10px;
+}
+form {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+li:hover{
+  cursor: pointer;
+  background-color: #949494;
 }
     </style>
